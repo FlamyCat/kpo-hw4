@@ -32,3 +32,6 @@ features = ["actix-web"]
 
 [workspace.dependencies.actix-web]
 version = "4.12.1"
+
+[workspace.dependencies.common]
+path = "crates/common"
