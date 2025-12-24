@@ -3,5 +3,17 @@
 version = 4
 
 [[package]]
-name = "kpo-hw4"
+name = "common"
+version = "0.1.0"
+
+[[package]]
+name = "gateway"
+version = "0.1.0"
+
+[[package]]
+name = "orders"
+version = "0.1.0"
+
+[[package]]
+name = "payments"
 version = "0.1.0"
