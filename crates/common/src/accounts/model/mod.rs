@@ -1,3 +1,5 @@
+pub mod dto;
+
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
