@@ -1,6 +1,3 @@
-[package]
-name = "kpo-hw4"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
+[workspace]
+members = ["crates/common", "crates/gateway", "crates/orders", "crates/payments"]
+resolver = "3"
