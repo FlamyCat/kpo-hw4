@@ -18,7 +18,6 @@ features = ["rt-multi-thread"]
 
 [workspace.dependencies.macros]
 git = "https://github.com/FlamyCat/kpo-hw3"
-branch = "dev"
 rev = "c80c9da"
 
 [workspace.dependencies.lapin]
