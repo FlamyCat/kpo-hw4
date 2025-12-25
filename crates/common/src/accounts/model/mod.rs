@@ -1,14 +1,26 @@
 pub mod dto;
 
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use surrealdb::sql::Thing;
+use dto::AccountInfo;
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct AccountInfo {
-    #[schema(example = "zi1yqmaesl1qdlhbmwjr")]
+/// Внутренняя модель для работы с базой данных.
+/// Клиент API эту структуру никогда не видит.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AccountRecord {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<String>,
-
-    #[schema(example = "1000.0")]
+    pub id: Option<Thing>,
     pub balance: f64,
+}
+
+/// Конвертация из записи БД в публичный DTO
+impl From<AccountRecord> for AccountInfo {
+    fn from(record: AccountRecord) -> Self {
+        Self {
+            id: record.id
+                .map(|t| t.id.to_string())
+                .unwrap_or_default(), 
+            balance: record.balance,
+        }
+    }
 }
