@@ -47,18 +47,6 @@ pub async fn create_order(
         return HttpResponse::BadRequest().body("Amount must be positive");
     }
 
-    let account_exists: Result<Option<serde::de::IgnoredAny>, _> =
-        data.db.select((ACCOUNTS, &req.user_id)).await;
-
-    match account_exists {
-        Ok(Some(_)) => {}
-        Ok(None) => {
-            return HttpResponse::NotFound()
-                .body(format!("Account with ID '{}' not found", req.user_id));
-        }
-        Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
-    }
-
     let order_id_key = surrealdb::sql::Id::rand();
     let order_id_thing = surrealdb::sql::Thing::from((ORDERS, order_id_key));
     let order_id_str = order_id_thing.id.to_string();
