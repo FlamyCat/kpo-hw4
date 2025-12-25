@@ -12,4 +12,4 @@ surrealdb.workspace = true
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 common.workspace = true
-chrono = "0.4.42"
+chrono.workspace = true

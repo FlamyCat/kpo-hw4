@@ -3154,7 +3154,10 @@ name = "payments"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "chrono",
  "common",
+ "futures",
+ "lapin",
  "serde",
  "serde_json",
  "surrealdb",
