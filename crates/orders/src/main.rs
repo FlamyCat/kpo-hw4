@@ -38,22 +38,23 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to connect to SurrealDB");
 
-    let rabbit_addr = std::env::var("RABBITMQ_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672/%2f".into());
-        let connection = Connection::connect(&rabbit_addr, ConnectionProperties::default())
-            .await
-            .expect("Failed to connect to RabbitMQ");
-    
-        let db_relay = db.clone();
-        let channel_relay = connection.create_channel().await.expect("ch");
-        tokio::spawn(async move {
-            common::relay::start_outbox_relay(db_relay, channel_relay).await;
-        });
-    
-        let db_consumer = db.clone();
-        let channel_consumer = connection.create_channel().await.expect("ch");
-        tokio::spawn(async move {
-            worker::start_orders_consumer(db_consumer, channel_consumer).await;
-        });
+    let rabbit_addr =
+        std::env::var("RABBITMQ_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672/%2f".into());
+    let connection = Connection::connect(&rabbit_addr, ConnectionProperties::default())
+        .await
+        .expect("Failed to connect to RabbitMQ");
+
+    let db_relay = db.clone();
+    let channel_relay = connection.create_channel().await.expect("ch");
+    tokio::spawn(async move {
+        common::relay::start_outbox_relay(db_relay, channel_relay).await;
+    });
+
+    let db_consumer = db.clone();
+    let channel_consumer = connection.create_channel().await.expect("ch");
+    tokio::spawn(async move {
+        worker::start_orders_consumer(db_consumer, channel_consumer).await;
+    });
 
     let app_state = web::Data::new(api::AppState { db });
 

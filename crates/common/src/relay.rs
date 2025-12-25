@@ -1,8 +1,8 @@
 use crate::db_utils::OutboxRecord;
 use crate::tables::OUTBOX;
 use futures::StreamExt;
-use lapin::{options::BasicPublishOptions, BasicProperties, Channel};
-use surrealdb::{engine::remote::ws::Client, Action, Surreal};
+use lapin::{BasicProperties, Channel, options::BasicPublishOptions};
+use surrealdb::{Action, Surreal, engine::remote::ws::Client};
 
 /// Запускает процесс пересылки сообщений из Outbox в RabbitMQ
 pub async fn start_outbox_relay(db: Surreal<Client>, channel: Channel) {
@@ -12,7 +12,7 @@ pub async fn start_outbox_relay(db: Surreal<Client>, channel: Channel) {
         .query("SELECT * FROM outbox WHERE processed = false")
         .await
         .map(|mut r| r.take(0).unwrap_or_default());
-    
+
     if let Ok(records) = pending {
         for record in records {
             process_record(&db, &channel, record).await;
@@ -52,7 +52,7 @@ pub async fn start_outbox_relay(db: Surreal<Client>, channel: Channel) {
 
 async fn process_record(db: &Surreal<Client>, channel: &Channel, record: OutboxRecord) {
     let payload = record.payload.as_bytes();
-    
+
     let publish_res = channel
         .basic_publish(
             &record.exchange,
@@ -66,7 +66,9 @@ async fn process_record(db: &Surreal<Client>, channel: &Channel, record: OutboxR
     match publish_res {
         Ok(_) => {
             if let Some(id) = record.id {
-                let _ = db.delete::<Option<OutboxRecord>>((id.tb, id.id.to_string())).await;
+                let _ = db
+                    .delete::<Option<OutboxRecord>>((id.tb, id.id.to_string()))
+                    .await;
             }
         }
         Err(e) => {

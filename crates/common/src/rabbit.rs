@@ -1,4 +1,8 @@
-use lapin::{Channel, ExchangeKind, options::{ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions}, types::FieldTable};
+use lapin::{
+    Channel, ExchangeKind,
+    options::{ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
+    types::FieldTable,
+};
 
 // Константы для RabbitMQ (Exchange и Routing Keys)
 pub const EXCHANGE_ORDER: &str = "order_exchange";

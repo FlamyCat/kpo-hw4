@@ -1,10 +1,10 @@
-use lapin::ConnectionProperties;
 use actix_web::{App, HttpServer, web};
 use common::{
     accounts::model::dto::{AccountInfo, CreateAccountRequest},
     db_utils, rabbit,
 };
 use lapin::Connection;
+use lapin::ConnectionProperties;
 use surrealdb::Surreal;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;

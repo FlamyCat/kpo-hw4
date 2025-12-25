@@ -8,10 +8,10 @@ pub mod dto;
 pub enum OrderStatus {
     /// The order is new and has not been processed yet.
     New,
-    
+
     /// The order was placed successfully.
     Finished,
-    
+
     /// There was an error processing the order.
     Cancelled,
 }
@@ -22,16 +22,16 @@ pub struct OrderRecord {
     /// ID заказа
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<Thing>,
-    
+
     /// ID пользователя, который создал заказ
     pub user_id: String,
-    
+
     /// Сумма заказа
     pub amount: f64,
-    
+
     /// Описание заказа
     pub description: String,
-    
+
     /// Статус заказа
     pub status: OrderStatus,
 }
