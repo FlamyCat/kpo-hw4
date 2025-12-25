@@ -67,6 +67,11 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
             let fail_account_json = serde_json::to_string(&fail_account_event).unwrap();
             let fail_funds_json = serde_json::to_string(&fail_funds_event).unwrap();
 
+            println!(
+                "DEBUG: Payments Consumer received order: {}",
+                event.order_id
+            );
+
             let sql = r#"
                 BEGIN TRANSACTION;
 
@@ -131,7 +136,9 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
                 .await;
 
             if let Err(e) = res {
-                eprintln!("Transaction failed: {}", e);
+                eprintln!("CRITICAL: Payments Transaction failed: {}", e);
+            } else {
+                println!("DEBUG: Payments Transaction OK");
             }
 
             let _ = delivery.ack(BasicAckOptions::default()).await;

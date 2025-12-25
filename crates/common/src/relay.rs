@@ -32,20 +32,23 @@ pub async fn start_outbox_relay(db: Surreal<Client>, channel: Channel) {
     while let Some(msg) = stream.next().await {
         match msg {
             Ok(notification) => {
+                println!("DEBUG: Got notification action: {:?}", notification.action); // <--- DEBUG
+
                 if notification.action == Action::Create {
+                    println!("DEBUG: Raw data: {:?}", notification.data); // <--- DEBUG
+
                     match serde_json::from_value::<OutboxRecord>(notification.data) {
                         Ok(record) => {
+                            println!("DEBUG: Sending record to Rabbit: {:?}", record.id); // <--- DEBUG
                             process_record(&db, &channel, record).await;
                         }
                         Err(e) => {
-                            eprintln!("Failed to deserialize outbox record: {}", e);
+                            eprintln!("CRITICAL: Failed to deserialize outbox record: {}", e); // <--- DEBUG
                         }
                     }
                 }
             }
-            Err(e) => {
-                eprintln!("Live Query stream error: {}", e);
-            }
+            Err(e) => eprintln!("Stream error: {}", e),
         }
     }
 }
