@@ -29,7 +29,7 @@ features = ["actix_extras"]
 
 [workspace.dependencies.utoipa-swagger-ui]
 version = "9.0.2"
-features = ["actix-web"]
+features = ["actix-web", "reqwest"]
 
 [workspace.dependencies.actix-web]
 version = "4.12.1"
