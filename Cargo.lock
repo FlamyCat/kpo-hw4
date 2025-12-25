@@ -3067,6 +3067,17 @@ checksum = "d05e27ee213611ffe7d6348b942e8f942b37114c00cc03cec254295a4a17852e"
 [[package]]
 name = "orders"
 version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "chrono",
+ "common",
+ "serde",
+ "serde_json",
+ "surrealdb",
+ "tokio",
+ "utoipa",
+ "utoipa-swagger-ui",
+]
 
 [[package]]
 name = "p12-keystore"
