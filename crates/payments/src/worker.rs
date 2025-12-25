@@ -76,16 +76,21 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
                 BEGIN TRANSACTION;
 
                 LET $inbox_exists = SELECT * FROM type::thing($table_inbox, $msg_id);
-
+                
+                -- Если запись есть, прерываем выполнение ошибкой.
+                -- Ошибка автоматически отменит транзакцию.
                 IF $inbox_exists != [] THEN
-                    CANCEL TRANSACTION;
+                    THROW "Duplicate message";
                 END;
 
+                -- Записываем в Inbox
                 CREATE type::thing($table_inbox, $msg_id) CONTENT { processed_at: time::now() };
 
+                -- 2. Проверка Аккаунта
                 LET $account = SELECT * FROM type::thing($table_accounts, $user_id);
-
+                
                 IF $account = [] THEN
+                    -- Аккаунта нет. Пишем Fail.
                     CREATE type::table($table_outbox) CONTENT {
                         payload: $fail_account_payload,
                         exchange: $exchange,
@@ -94,9 +99,12 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
                         processed: false
                     };
                 ELSE
+                    -- Аккаунт есть. Проверяем баланс.
+                    -- Внимание: доступ к массиву через [0]
                     LET $balance = $account[0].balance;
-
+                    
                     IF $balance < $amount THEN
+                        -- Денег нет. Пишем Fail.
                         CREATE type::table($table_outbox) CONTENT {
                             payload: $fail_funds_payload,
                             exchange: $exchange,
@@ -105,8 +113,10 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
                             processed: false
                         };
                     ELSE
+                        -- Все ок. Списываем.
                         UPDATE type::thing($table_accounts, $user_id) SET balance -= $amount;
-
+                        
+                        -- Пишем Success в Outbox.
                         CREATE type::table($table_outbox) CONTENT {
                             payload: $success_payload,
                             exchange: $exchange,
@@ -123,7 +133,7 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
             let res = db
                 .query(sql)
                 .bind(("table_inbox", INBOX))
-                .bind(("msg_id", msg_id))
+                .bind(("msg_id", msg_id.clone()))
                 .bind(("table_accounts", ACCOUNTS))
                 .bind(("user_id", event.user_id))
                 .bind(("amount", event.amount))
@@ -136,9 +146,14 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
                 .await;
 
             if let Err(e) = res {
-                eprintln!("CRITICAL: Payments Transaction failed: {}", e);
+                let err_string = e.to_string();
+                if err_string.contains("Duplicate message") {
+                    println!("DEBUG: Message {} already processed (Idempotency check)", msg_id);
+                } else {
+                    eprintln!("CRITICAL: Payments Transaction failed: {}", e);
+                }
             } else {
-                println!("DEBUG: Payments Transaction OK");
+                 println!("DEBUG: Payments Transaction OK");
             }
 
             let _ = delivery.ack(BasicAckOptions::default()).await;
