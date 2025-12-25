@@ -44,6 +44,15 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Failed to connect to RabbitMQ");
 
+    let channel = connection
+        .create_channel()
+        .await
+        .expect("Failed to create channel");
+
+    common::rabbit::setup_rabbit(&channel)
+        .await
+        .expect("Failed to setup RabbitMQ topology");
+
     let db_relay = db.clone();
     let channel_relay = connection.create_channel().await.expect("ch");
     tokio::spawn(async move {
