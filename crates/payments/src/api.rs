@@ -7,7 +7,6 @@ use common::{
     tables::ACCOUNTS,
 };
 use serde::Deserialize;
-use serde_json::json;
 use surrealdb::{Surreal, engine::remote::ws::Client};
 use utoipa::ToSchema;
 
@@ -47,7 +46,7 @@ pub async fn create_account(
         data.db.create(ACCOUNTS).content(request_data).await;
 
     match created {
-        Ok(Some(record)) => HttpResponse::Created().json(AccountInfo::from(record).id),
+        Ok(Some(record)) => HttpResponse::Created().json(AccountInfo::from(record)),
         Ok(None) => HttpResponse::InternalServerError().body("Failed to create account"),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
@@ -119,7 +118,7 @@ pub async fn deposit(
     let id = path.into_inner();
     let sql = "UPDATE type::thing($table, $id) SET balance += $amount RETURN AFTER";
 
-    let mut response = data
+    let response = data
         .db
         .query(sql)
         .bind(("table", ACCOUNTS))
