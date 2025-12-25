@@ -7,7 +7,7 @@ use chrono::Utc;
 use common::{
     events::OrderCreatedEvent,
     rabbit::{EXCHANGE_ORDER, ROUTING_KEY_ORDER_CREATED},
-    tables::{ACCOUNTS, ORDERS, OUTBOX},
+    tables::{ORDERS, OUTBOX},
 };
 use surrealdb::{Surreal, engine::remote::ws::Client};
 
