@@ -13,3 +13,4 @@ utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 common.workspace = true
 chrono.workspace = true
+lapin.workspace = true
