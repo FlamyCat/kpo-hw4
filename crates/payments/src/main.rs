@@ -1,13 +1,16 @@
+use lapin::ConnectionProperties;
 use actix_web::{App, HttpServer, web};
 use common::{
     accounts::model::dto::{AccountInfo, CreateAccountRequest},
-    db_utils,
+    db_utils, rabbit,
 };
+use lapin::Connection;
 use surrealdb::Surreal;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 mod api;
+mod worker;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -32,6 +35,33 @@ async fn main() -> std::io::Result<()> {
     db_utils::connect(&db)
         .await
         .expect("Failed to connect to SurrealDB");
+
+    let rabbit_addr =
+        std::env::var("RABBITMQ_ADDR").unwrap_or_else(|_| "amqp://127.0.0.1:5672/%2f".into());
+    let connection = Connection::connect(&rabbit_addr, ConnectionProperties::default())
+        .await
+        .expect("Failed to connect to RabbitMQ");
+
+    let channel = connection
+        .create_channel()
+        .await
+        .expect("Failed to create channel");
+
+    rabbit::setup_rabbit(&channel)
+        .await
+        .expect("Failed to setup RabbitMQ");
+
+    let db_relay = db.clone();
+    let channel_relay = connection.create_channel().await.expect("ch");
+    tokio::spawn(async move {
+        common::relay::start_outbox_relay(db_relay, channel_relay).await;
+    });
+
+    let db_consumer = db.clone();
+    let channel_consumer = connection.create_channel().await.expect("ch");
+    tokio::spawn(async move {
+        worker::start_payments_consumer(db_consumer, channel_consumer).await;
+    });
 
     let app_state = web::Data::new(api::AppState { db });
 
