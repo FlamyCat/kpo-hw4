@@ -2,7 +2,7 @@ use actix_web::{HttpResponse, Responder, get, post, web};
 use common::{
     accounts::model::{
         AccountRecord,
-        dto::{AccountInfo, CreateAccountRequest},
+        dto::{AccountInfo, BalanceInfo, CreateAccountRequest},
     },
     tables::ACCOUNTS,
 };
@@ -59,8 +59,7 @@ pub async fn create_account(
             status = 200,
             description = "Account found",
             body = AccountInfo,
-            example = json!(AccountInfo {
-                id: "zi1yqmaesl1qdlhbmwjr".to_string(),
+            example = json!(BalanceInfo {
                 balance: 150.0
             })
         ),
@@ -78,7 +77,7 @@ pub async fn get_balance(data: web::Data<AppState>, path: web::Path<String>) -> 
     let result: Result<Option<AccountRecord>, _> = data.db.select((ACCOUNTS, id)).await;
 
     match result {
-        Ok(Some(record)) => HttpResponse::Ok().json(AccountInfo::from(record)),
+        Ok(Some(record)) => HttpResponse::Ok().json(BalanceInfo::from(record)),
         Ok(None) => HttpResponse::NotFound().body("Account not found"),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
