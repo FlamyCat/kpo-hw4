@@ -1,0 +1,17 @@
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: shop_db
+    ports:
+      - "8000:8000"
+    command: start --user root --pass root memory --no-banner
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: shop_mq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
