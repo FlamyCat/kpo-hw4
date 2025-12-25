@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-/// Публичный DTO для ответов API.
-/// Содержит чистый ID и только нужные поля.
+/// Information about an account.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccountInfo {
     #[schema(example = "zi1yqmaesl1qdlhbmwjr")]

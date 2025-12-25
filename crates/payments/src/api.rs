@@ -21,7 +21,7 @@ pub struct DepositRequest {
     pub amount: f64,
 }
 
-/// Create a new account. The ID is generated automatically.
+/// Create a new account.
 #[utoipa::path(
     responses(
         (
@@ -59,7 +59,6 @@ pub async fn create_account(
 
 /// Get account balance by ID.
 #[utoipa::path(
-    path = "/accounts/{id}",
     responses(
         (
             status = 200, 
@@ -93,9 +92,9 @@ pub async fn get_balance(
     }
 }
 
-/// Deposit money to account (Atomically).
+/// Deposit money to account.
+/// The amount of money to deposit must be positive.
 #[utoipa::path(
-    path = "/accounts/{id}/deposit",
     responses(
         (
             status = 200, 
