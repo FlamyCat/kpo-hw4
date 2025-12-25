@@ -1,6 +1,6 @@
-use actix_web::{web, App, HttpServer};
+use actix_web::{App, HttpServer, web};
 use common::{
-    accounts::model::dto::{CreateAccountRequest, AccountInfo},
+    accounts::model::dto::{AccountInfo, CreateAccountRequest},
     db_utils,
 };
 use surrealdb::Surreal;

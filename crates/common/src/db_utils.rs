@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::env;
 use surrealdb::{
+    Surreal,
     engine::remote::ws::{Client, Ws},
     opt::auth::Root,
     sql::Thing,
-    Surreal,
 };
 
 /// Структура записи в таблице Outbox

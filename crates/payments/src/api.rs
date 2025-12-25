@@ -1,14 +1,14 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, get, post, web};
 use common::{
     accounts::model::{
-        dto::{AccountInfo, CreateAccountRequest},
         AccountRecord,
+        dto::{AccountInfo, CreateAccountRequest},
     },
     tables::ACCOUNTS,
 };
 use serde::Deserialize;
 use serde_json::json;
-use surrealdb::{engine::remote::ws::Client, Surreal};
+use surrealdb::{Surreal, engine::remote::ws::Client};
 use utoipa::ToSchema;
 
 pub struct AppState {
@@ -25,12 +25,12 @@ pub struct DepositRequest {
 #[utoipa::path(
     responses(
         (
-            status = 201, 
-            description = "Account created successfully", 
+            status = 201,
+            description = "Account created successfully",
             body = AccountInfo,
-            example = json!(AccountInfo { 
-                id: "zi1yqmaesl1qdlhbmwjr".to_string(), 
-                balance: 0.0 
+            example = json!(AccountInfo {
+                id: "zi1yqmaesl1qdlhbmwjr".to_string(),
+                balance: 0.0
             })
         ),
         (status = 500, description = "Internal Server Error")
@@ -43,15 +43,11 @@ pub async fn create_account(
 ) -> impl Responder {
     let request_data = req.into_inner();
 
-    let created: Result<Option<AccountRecord>, _> = data.db
-        .create(ACCOUNTS)
-        .content(request_data)
-        .await;
+    let created: Result<Option<AccountRecord>, _> =
+        data.db.create(ACCOUNTS).content(request_data).await;
 
     match created {
-        Ok(Some(record)) => {
-            HttpResponse::Created().json(AccountInfo::from(record).id)
-        }
+        Ok(Some(record)) => HttpResponse::Created().json(AccountInfo::from(record).id),
         Ok(None) => HttpResponse::InternalServerError().body("Failed to create account"),
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
@@ -61,12 +57,12 @@ pub async fn create_account(
 #[utoipa::path(
     responses(
         (
-            status = 200, 
-            description = "Account found", 
+            status = 200,
+            description = "Account found",
             body = AccountInfo,
-            example = json!(AccountInfo { 
-                id: "zi1yqmaesl1qdlhbmwjr".to_string(), 
-                balance: 150.0 
+            example = json!(AccountInfo {
+                id: "zi1yqmaesl1qdlhbmwjr".to_string(),
+                balance: 150.0
             })
         ),
         (status = 404, description = "Account not found"),
@@ -77,10 +73,7 @@ pub async fn create_account(
     )
 )]
 #[get("/accounts/{id}")]
-pub async fn get_balance(
-    data: web::Data<AppState>,
-    path: web::Path<String>,
-) -> impl Responder {
+pub async fn get_balance(data: web::Data<AppState>, path: web::Path<String>) -> impl Responder {
     let id = path.into_inner();
 
     let result: Result<Option<AccountRecord>, _> = data.db.select((ACCOUNTS, id)).await;
@@ -97,12 +90,12 @@ pub async fn get_balance(
 #[utoipa::path(
     responses(
         (
-            status = 200, 
-            description = "Deposit successful", 
+            status = 200,
+            description = "Deposit successful",
             body = AccountInfo,
-            example = json!(AccountInfo { 
-                id: "zi1yqmaesl1qdlhbmwjr".to_string(), 
-                balance: 200.0 
+            example = json!(AccountInfo {
+                id: "zi1yqmaesl1qdlhbmwjr".to_string(),
+                balance: 200.0
             })
         ),
         (status = 400, description = "Invalid amount"),
@@ -126,7 +119,9 @@ pub async fn deposit(
     let id = path.into_inner();
     let sql = "UPDATE type::thing($table, $id) SET balance += $amount RETURN AFTER";
 
-    let mut response = data.db.query(sql)
+    let mut response = data
+        .db
+        .query(sql)
         .bind(("table", ACCOUNTS))
         .bind(("id", id))
         .bind(("amount", req.amount))

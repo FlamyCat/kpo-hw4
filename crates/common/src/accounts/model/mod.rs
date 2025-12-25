@@ -1,8 +1,8 @@
 pub mod dto;
 
+use dto::AccountInfo;
 use serde::{Deserialize, Serialize};
 use surrealdb::sql::Thing;
-use dto::AccountInfo;
 
 /// Внутренняя модель для работы с базой данных.
 /// Клиент API эту структуру никогда не видит.
@@ -17,9 +17,7 @@ pub struct AccountRecord {
 impl From<AccountRecord> for AccountInfo {
     fn from(record: AccountRecord) -> Self {
         Self {
-            id: record.id
-                .map(|t| t.id.to_string())
-                .unwrap_or_default(), 
+            id: record.id.map(|t| t.id.to_string()).unwrap_or_default(),
             balance: record.balance,
         }
     }
