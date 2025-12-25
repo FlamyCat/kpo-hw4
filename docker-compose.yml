@@ -2,9 +2,10 @@ services:
   surrealdb:
     image: surrealdb/surrealdb:latest
     container_name: shop_db
+    user: root
     ports:
       - "8000:8000"
-    command: start --log trace --user root --pass root --allow-all --no-banner file://var/lib/surrealdb/data.db
+    command: start --log INFO --user root --pass root --allow-all --no-banner file://var/lib/surrealdb/data.db
     volumes:
       - surreal_data:/var/lib/surrealdb
     healthcheck:
