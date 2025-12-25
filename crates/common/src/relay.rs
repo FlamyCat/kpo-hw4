@@ -33,7 +33,11 @@ pub async fn start_outbox_relay(db: Surreal<Client>, channel: Channel) {
 }
 
 async fn process_record(db: &Surreal<Client>, channel: &Channel, record: OutboxRecord) {
-    let payload = record.payload.as_bytes();
+    let payload_string = match record.payload {
+        serde_json::Value::String(s) => s,
+        val => serde_json::to_string(&val).unwrap_or_default(),
+    };
+    let payload = payload_string.as_bytes();
 
     let msg_id = record
         .id
@@ -41,8 +45,12 @@ async fn process_record(db: &Surreal<Client>, channel: &Channel, record: OutboxR
         .map(|t| t.id.to_string())
         .unwrap_or_else(|| Id::rand().to_string());
 
-    // Создаем свойства сообщения
     let props = BasicProperties::default().with_message_id(msg_id.into());
+
+    println!(
+        "DEBUG: Publishing to Ex: '{}', Key: '{}', Payload: '{}'",
+        record.exchange, record.routing_key, payload_string
+    );
 
     let publish_res = channel
         .basic_publish(
@@ -56,10 +64,14 @@ async fn process_record(db: &Surreal<Client>, channel: &Channel, record: OutboxR
 
     match publish_res {
         Ok(_) => {
-            if let Some(id) = record.id {
-                let _ = db
-                    .delete::<Option<OutboxRecord>>((id.tb, id.id.to_string()))
-                    .await;
+            if let Some(thing) = record.id {
+                println!("DEBUG: Deleting outbox record: {}:{}", thing.tb, thing.id);
+                if let Err(e) = db
+                    .delete::<Option<OutboxRecord>>((thing.tb, thing.id.to_string()))
+                    .await
+                {
+                    eprintln!("CRITICAL: Failed to delete outbox record! {:?}", e);
+                }
             }
         }
         Err(e) => {

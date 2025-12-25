@@ -12,7 +12,7 @@ use surrealdb::{
 pub struct OutboxRecord {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<Thing>,
-    pub payload: String,
+    pub payload: serde_json::Value,
     pub exchange: String,
     pub routing_key: String,
     pub created_at: String,

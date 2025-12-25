@@ -75,22 +75,11 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
             let sql = r#"
                 BEGIN TRANSACTION;
 
-                LET $inbox_exists = SELECT * FROM type::thing($table_inbox, $msg_id);
-                
-                -- Если запись есть, прерываем выполнение ошибкой.
-                -- Ошибка автоматически отменит транзакцию.
-                IF $inbox_exists != [] THEN
-                    THROW "Duplicate message";
-                END;
-
-                -- Записываем в Inbox
                 CREATE type::thing($table_inbox, $msg_id) CONTENT { processed_at: time::now() };
 
-                -- 2. Проверка Аккаунта
                 LET $account = SELECT * FROM type::thing($table_accounts, $user_id);
                 
-                IF $account = [] THEN
-                    -- Аккаунта нет. Пишем Fail.
+                IF array::len($account) = 0 {
                     CREATE type::table($table_outbox) CONTENT {
                         payload: $fail_account_payload,
                         exchange: $exchange,
@@ -98,34 +87,25 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
                         created_at: time::now(),
                         processed: false
                     };
-                ELSE
-                    -- Аккаунт есть. Проверяем баланс.
-                    -- Внимание: доступ к массиву через [0]
-                    LET $balance = $account[0].balance;
+                } ELSE IF $account[0].balance < $amount {
+                    CREATE type::table($table_outbox) CONTENT {
+                        payload: $fail_funds_payload,
+                        exchange: $exchange,
+                        routing_key: $routing_key,
+                        created_at: time::now(),
+                        processed: false
+                    };
+                } ELSE {
+                    UPDATE type::thing($table_accounts, $user_id) SET balance -= $amount;
                     
-                    IF $balance < $amount THEN
-                        -- Денег нет. Пишем Fail.
-                        CREATE type::table($table_outbox) CONTENT {
-                            payload: $fail_funds_payload,
-                            exchange: $exchange,
-                            routing_key: $routing_key,
-                            created_at: time::now(),
-                            processed: false
-                        };
-                    ELSE
-                        -- Все ок. Списываем.
-                        UPDATE type::thing($table_accounts, $user_id) SET balance -= $amount;
-                        
-                        -- Пишем Success в Outbox.
-                        CREATE type::table($table_outbox) CONTENT {
-                            payload: $success_payload,
-                            exchange: $exchange,
-                            routing_key: $routing_key,
-                            created_at: time::now(),
-                            processed: false
-                        };
-                    END;
-                END;
+                    CREATE type::table($table_outbox) CONTENT {
+                        payload: $success_payload,
+                        exchange: $exchange,
+                        routing_key: $routing_key,
+                        created_at: time::now(),
+                        processed: false
+                    };
+                };
 
                 COMMIT TRANSACTION;
             "#;
