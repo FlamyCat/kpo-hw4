@@ -2,17 +2,17 @@ use crate::db_utils::OutboxRecord;
 use crate::tables::OUTBOX;
 use futures::StreamExt;
 use lapin::{BasicProperties, Channel, options::BasicPublishOptions};
-use surrealdb::{Action, Surreal, engine::remote::ws::Client};
+use surrealdb::{Surreal, engine::remote::ws::Client};
 
 /// Запускает процесс пересылки сообщений из Outbox в RabbitMQ
 pub async fn start_outbox_relay(db: Surreal<Client>, channel: Channel) {
-    eprintln!("Starting Outbox Relay");
+    println!("Starting Outbox Relay...");
 
     let pending: Result<Vec<OutboxRecord>, _> = db
         .query("SELECT * FROM outbox WHERE processed = false")
         .await
         .map(|mut r| r.take(0).unwrap_or_default());
-
+    
     if let Ok(records) = pending {
         for record in records {
             process_record(&db, &channel, record).await;
@@ -27,28 +27,30 @@ pub async fn start_outbox_relay(db: Surreal<Client>, channel: Channel) {
         }
     };
 
-    eprintln!("Listening for new outbox messages");
+    println!("Listening for new outbox messages...");
 
     while let Some(msg) = stream.next().await {
         match msg {
             Ok(notification) => {
-                println!("DEBUG: Got notification action: {:?}", notification.action); // <--- DEBUG
+                println!("DEBUG: Action: {:?}", notification.action); 
 
-                if notification.action == Action::Create {
-                    println!("DEBUG: Raw data: {:?}", notification.data); // <--- DEBUG
+                if matches!(notification.action, surrealdb::Action::Create) {
+                    let data_value = notification.data;
 
-                    match serde_json::from_value::<OutboxRecord>(notification.data) {
+                    match serde_json::from_value::<OutboxRecord>(data_value) {
                         Ok(record) => {
-                            println!("DEBUG: Sending record to Rabbit: {:?}", record.id); // <--- DEBUG
+                            println!("DEBUG: Relay processing record: {:?}", record.id);
                             process_record(&db, &channel, record).await;
-                        }
+                        },
                         Err(e) => {
-                            eprintln!("CRITICAL: Failed to deserialize outbox record: {}", e); // <--- DEBUG
+                            eprintln!("CRITICAL: JSON deserialize error: {}", e);
                         }
                     }
                 }
             }
-            Err(e) => eprintln!("Stream error: {}", e),
+            Err(e) => {
+                eprintln!("Stream error: {}", e);
+            }
         }
     }
 }
