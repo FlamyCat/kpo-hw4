@@ -32,3 +32,6 @@ version = "4.12.1"
 
 [workspace.dependencies.common]
 path = "crates/common"
+
+[workspace.dependencies.futures]
+version = "0.3.31"

@@ -10,3 +10,4 @@ surrealdb.workspace = true
 lapin.workspace = true
 tokio.workspace = true
 utoipa.workspace = true
+futures.workspace = true
