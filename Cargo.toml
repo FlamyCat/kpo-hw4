@@ -16,10 +16,6 @@ version = "2.4.0"
 version = "1.48.0"
 features = ["rt-multi-thread"]
 
-[workspace.dependencies.macros]
-git = "https://github.com/FlamyCat/kpo-hw3"
-rev = "c80c9da"
-
 [workspace.dependencies.lapin]
 version = "3.7.2"
 

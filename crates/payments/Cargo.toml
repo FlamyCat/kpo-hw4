@@ -12,4 +12,3 @@ surrealdb.workspace = true
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 common.workspace = true
-macros.workspace = true
