@@ -4,7 +4,14 @@ services:
     container_name: shop_db
     ports:
       - "8000:8000"
-    command: start --user root --pass root memory --no-banner
+    command: start --log trace --user root --pass root --allow-all --no-banner file://var/lib/surrealdb/data.db
+    volumes:
+      - surreal_data:/var/lib/surrealdb
+    healthcheck:
+      test: ["CMD", "/surreal", "is-ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -15,3 +22,68 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  payments:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: payments
+    container_name: shop_payments
+    restart: on-failure
+    ports:
+      - "8081:8081"
+    environment:
+      - IS_DOCKER=true
+      - RABBITMQ_ADDR=amqp://guest:guest@rabbitmq:5672/%2f
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  orders:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: orders
+    container_name: shop_orders
+    restart: on-failure
+    ports:
+      - "8082:8082"
+    environment:
+      - IS_DOCKER=true
+      - RABBITMQ_ADDR=amqp://guest:guest@rabbitmq:5672/%2f
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: gateway
+    container_name: shop_gateway
+    restart: on-failure
+    ports:
+      - "8080:8080"
+    environment:
+      - IS_DOCKER=true
+    depends_on:
+      - orders
+      - payments
+
+volumes:
+  surreal_data:
+  rabbitmq_data:
