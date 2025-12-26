@@ -1236,7 +1236,6 @@ dependencies = [
 name = "common"
 version = "0.1.0"
 dependencies = [
- "futures",
  "lapin",
  "serde",
  "serde_json",
@@ -2008,9 +2007,6 @@ dependencies = [
  "actix-cors",
  "actix-web",
  "awc",
- "futures",
- "serde",
- "tokio",
  "url",
  "utoipa-swagger-ui",
 ]
@@ -3289,7 +3285,6 @@ name = "payments"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "chrono",
  "common",
  "futures",
  "lapin",
