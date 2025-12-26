@@ -4,12 +4,6 @@ use awc::Client;
 use url::Url;
 use utoipa_swagger_ui::{Config, SwaggerUi, Url as SwaggerUrl};
 
-#[derive(Clone)]
-struct ConfigData {
-    orders_url: String,
-    payments_url: String,
-}
-
 async fn forward_request(
     req: HttpRequest,
     payload: web::Payload,
@@ -27,7 +21,7 @@ async fn forward_request(
     let res = forwarded_req
         .send_stream(payload)
         .await
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+        .map_err(actix_web::error::ErrorInternalServerError)?;
 
     let mut client_resp = HttpResponse::build(res.status());
     for (header_name, header_value) in res.headers().iter() {
@@ -47,12 +41,12 @@ async fn fetch_openapi_spec(
         .get(&spec_url)
         .send()
         .await
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+        .map_err(actix_web::error::ErrorInternalServerError)?;
 
     let body = res
         .body()
         .await
-        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
+        .map_err(actix_web::error::ErrorInternalServerError)?;
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")
@@ -80,10 +74,6 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .app_data(web::Data::new(Client::default()))
-            .app_data(web::Data::new(ConfigData {
-                orders_url: orders_url.clone(),
-                payments_url: payments_url.clone(),
-            }))
             .service(
                 web::scope("/orders")
                     .app_data(web::Data::new(orders_url.clone()))
