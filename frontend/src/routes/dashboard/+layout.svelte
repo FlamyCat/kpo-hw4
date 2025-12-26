@@ -26,6 +26,8 @@
                            class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent hover:border-gray-300">My Orders</a>
                         <a href="/dashboard/create"
                            class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent hover:border-gray-300">New Order</a>
+                        <a href="/dashboard/deposit"
+                           class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium border-transparent hover:border-gray-300">Deposit</a>
                     </div>
                 </div>
                 <div class="flex items-center">
