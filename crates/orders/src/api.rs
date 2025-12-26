@@ -4,15 +4,23 @@ use crate::model::{
 };
 use actix_web::{HttpResponse, Responder, get, post, web};
 use chrono::Utc;
+use serde::Deserialize;
 use common::{
     events::OrderCreatedEvent,
     rabbit::{EXCHANGE_ORDER, ROUTING_KEY_ORDER_CREATED},
     tables::{ORDERS, OUTBOX},
 };
 use surrealdb::{Surreal, engine::remote::ws::Client};
+use utoipa::IntoParams;
 
 pub struct AppState {
     pub db: Surreal<Client>,
+}
+
+#[derive(Deserialize, IntoParams)]
+pub struct ListOrdersParams {
+    /// Filter orders by User ID
+    pub user_id: Option<String>,
 }
 
 /// Create a new order.
@@ -115,7 +123,9 @@ pub async fn create_order(
 }
 
 #[utoipa::path(
-    path = "/orders",
+    params(
+        ListOrdersParams
+    ),
     responses(
         (
             status = 200,
@@ -126,15 +136,26 @@ pub async fn create_order(
     )
 )]
 #[get("/orders")]
-pub async fn list_orders(data: web::Data<AppState>) -> impl Responder {
-    let result: Result<Vec<OrderRecord>, _> = data.db.select(ORDERS).await;
+pub async fn list_orders(
+    data: web::Data<AppState>,
+    query: web::Query<ListOrdersParams>,
+) -> impl Responder {
+    let params = query.into_inner();
+
+    let result: Result<Vec<OrderRecord>, _> = if let Some(uid) = params.user_id {
+        data.db.query("SELECT * FROM orders WHERE user_id = $uid")
+            .bind(("uid", uid))
+            .await
+            .map(|mut r| r.take(0).unwrap_or_default())
+    } else {
+        data.db.select(ORDERS).await
+    };
 
     match result {
         Ok(records) => {
-            let responses: Vec<OrderResponse> =
-                records.into_iter().map(OrderResponse::from).collect();
+            let responses: Vec<OrderResponse> = records.into_iter().map(OrderResponse::from).collect();
             HttpResponse::Ok().json(responses)
-        }
+        },
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
