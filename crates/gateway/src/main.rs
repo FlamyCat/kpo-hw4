@@ -1,5 +1,5 @@
 use actix_cors::Cors;
-use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use actix_web::{App, Error, HttpRequest, HttpResponse, HttpServer, web};
 use awc::Client;
 use url::Url;
 use utoipa_swagger_ui::{Config, SwaggerUi, Url as SwaggerUrl};

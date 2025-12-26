@@ -4,12 +4,12 @@ use crate::model::{
 };
 use actix_web::{HttpResponse, Responder, get, post, web};
 use chrono::Utc;
-use serde::Deserialize;
 use common::{
     events::OrderCreatedEvent,
     rabbit::{EXCHANGE_ORDER, ROUTING_KEY_ORDER_CREATED},
     tables::{ORDERS, OUTBOX},
 };
+use serde::Deserialize;
 use surrealdb::{Surreal, engine::remote::ws::Client};
 use utoipa::IntoParams;
 
@@ -143,7 +143,8 @@ pub async fn list_orders(
     let params = query.into_inner();
 
     let result: Result<Vec<OrderRecord>, _> = if let Some(uid) = params.user_id {
-        data.db.query("SELECT * FROM orders WHERE user_id = $uid")
+        data.db
+            .query("SELECT * FROM orders WHERE user_id = $uid")
             .bind(("uid", uid))
             .await
             .map(|mut r| r.take(0).unwrap_or_default())
@@ -153,9 +154,10 @@ pub async fn list_orders(
 
     match result {
         Ok(records) => {
-            let responses: Vec<OrderResponse> = records.into_iter().map(OrderResponse::from).collect();
+            let responses: Vec<OrderResponse> =
+                records.into_iter().map(OrderResponse::from).collect();
             HttpResponse::Ok().json(responses)
-        },
+        }
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }

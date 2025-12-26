@@ -128,12 +128,15 @@ pub async fn start_payments_consumer(db: Surreal<Client>, channel: Channel) {
             if let Err(e) = res {
                 let err_string = e.to_string();
                 if err_string.contains("Duplicate message") {
-                    println!("DEBUG: Message {} already processed (Idempotency check)", msg_id);
+                    println!(
+                        "DEBUG: Message {} already processed (Idempotency check)",
+                        msg_id
+                    );
                 } else {
                     eprintln!("CRITICAL: Payments Transaction failed: {}", e);
                 }
             } else {
-                 println!("DEBUG: Payments Transaction OK");
+                println!("DEBUG: Payments Transaction OK");
             }
 
             let _ = delivery.ack(BasicAckOptions::default()).await;
