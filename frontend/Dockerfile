@@ -3,9 +3,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+RUN npx svelte-kit sync
 RUN npm run build
-RUN npm prune --production
-
+RUN npm prune --omit=dev
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app/build build/
