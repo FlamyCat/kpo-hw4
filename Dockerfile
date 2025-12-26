@@ -1,22 +1,22 @@
-FROM rust:1.92 as planner
+FROM rust:1.92-bookworm AS planner
 WORKDIR /app
 RUN cargo install cargo-chef
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
-FROM rust:1.92 as cacher
+FROM rust:1.92-bookworm AS cacher
 WORKDIR /app
 RUN cargo install cargo-chef
 COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
-FROM rust:1.92 as builder
+FROM rust:1.92-bookworm AS builder
 WORKDIR /app
 COPY . .
 COPY --from=cacher /app/target target
 RUN cargo build --release --workspace
 
-FROM debian:bookworm-slim
+FROM debian:bookworm
 
 RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/lib/apt/lists/*
 
