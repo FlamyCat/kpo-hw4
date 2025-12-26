@@ -11,3 +11,4 @@ url = "2.5"
 serde.workspace = true
 tokio.workspace = true
 utoipa-swagger-ui.workspace = true
+actix-cors = "0.7.1"

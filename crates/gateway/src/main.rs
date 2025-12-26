@@ -1,4 +1,5 @@
-use actix_web::{App, Error, HttpRequest, HttpResponse, HttpServer, web};
+use actix_cors::Cors;
+use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use awc::Client;
 use url::Url;
 use utoipa_swagger_ui::{Config, SwaggerUi, Url as SwaggerUrl};
@@ -58,7 +59,7 @@ async fn fetch_openapi_spec(
         .body(body))
 }
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let orders_url =
         std::env::var("ORDERS_SERVICE_URL").unwrap_or_else(|_| "http://127.0.0.1:8082".to_string());
@@ -74,7 +75,10 @@ async fn main() -> std::io::Result<()> {
     println!("  -> Payments Service: {}", payments_url);
 
     HttpServer::new(move || {
+        let cors = Cors::permissive();
+
         App::new()
+            .wrap(cors)
             .app_data(web::Data::new(Client::default()))
             .app_data(web::Data::new(ConfigData {
                 orders_url: orders_url.clone(),
