@@ -1,2 +1,5 @@
 /target
 .idea
+codebook.toml
+plan.md
+.zed/tasks.json

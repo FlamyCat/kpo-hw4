@@ -1,0 +1,11 @@
+[package]
+name = "gateway"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+awc = { version = "3.8.1", features = ["openssl"] }
+actix-web.workspace = true
+url = "2.5"
+utoipa-swagger-ui.workspace = true
+actix-cors = "0.7.1"
